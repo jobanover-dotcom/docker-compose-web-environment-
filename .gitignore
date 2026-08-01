@@ -1,0 +1,7 @@
+mysql/data/
+redis/data/
+nginx/ssl/server.key
+nginx/ssl/server.crt
+php/conf.d/devilbox-runtime-*
+php/conf.d/zzz-entrypoint-logfiles.ini
+*.log

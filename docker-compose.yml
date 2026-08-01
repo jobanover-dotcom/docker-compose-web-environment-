@@ -1,0 +1,96 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./app:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - php
+    networks:
+      - it302_network
+
+  php:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: php
+    volumes:
+      - ./app:/var/www/html
+      - ./php/conf.d:/usr/local/etc/php/conf.d
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - it302_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: it302_maradia
+      MYSQL_DATABASE: it302_maradia
+      MYSQL_USER: it302_maradia
+      MYSQL_PASSWORD: it302_maradia
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - it302_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - it302_network
+
+  workspace:
+    image: devilbox/php-fpm:8.2-work
+    container_name: workspace
+    working_dir: /var/www/html
+    command: tail -f /dev/null
+    volumes:
+      - ./app:/var/www/html
+      - ./workspace:/home/workspace
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - it302_network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data
+    networks:
+      - it302_network
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - it302_network
+
+networks:
+  it302_network:
+    driver: bridge
